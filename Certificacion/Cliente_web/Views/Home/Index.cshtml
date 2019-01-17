@@ -1,0 +1,230 @@
+﻿<h2 align="center"> Registros </h2>
+
+
+<div class="centrarCaja">
+
+    <form>
+        <!--Input para obtener el identificador-->
+        <input type="text" class="form-control" id="identificador" disabled>
+
+        <input type="text" placeholder="Ubicacion" class="form-control" id="ubicacion" required />
+        <br />
+
+        <input type="number" placeholder="cantidad de sillas" class="form-control" id="cantsillas" required />
+        <br />
+
+        <input type="number" placeholder="Consumo" class="form-control" id="consumo" required />
+        <br />
+
+
+        <select id="estado" class="form-control" name="opciones">
+            <option value="Disponible">Disponible</option>
+            <option value="No disponible">No disponible</option>
+        </select>
+        <br />
+
+        <br />
+
+        <button if="btn==true" class="btn btn-danger" id="guardar">Guardar</button>
+        <input type="button" id="actualizar" value="actualizar" class="btn btn-primary">
+
+    </form>
+
+</div>
+
+
+
+<br />
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Ubicacion</th>
+            <th>Estado</th>
+            <th>Consumo</th>
+            <th>cantidad de sillas</th>
+            <th>Operaciones</th>
+        </tr>
+    </thead>
+
+    <tbody id="tabla"></tbody>
+
+</table>
+
+
+
+<script>
+
+
+
+       $(document).ready(function () {
+
+           //cargamos la tabla al iniciar
+            cargarTabla();
+            $("#actualizar").hide();
+            $("#identificador").hide();
+            $("#guardar").show();
+
+
+            $("#actualizar").click(actualizar);
+
+             // funcion para guardar
+            $("#guardar").click(function () {
+
+                var ubicacion = $("#ubicacion").val();
+                var estado = $("#estado").val();
+                var consumo = $("#consumo").val();
+                var cantsillas = $("#cantsillas").val();
+
+                //enviamos por ajax los datos a guardar
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/Mesas',
+                    data: {
+                        Ubicacion: ubicacion,
+                        Estado: estado,
+                        Consumo: consumo,
+                        CantSillas: cantsillas
+                    },
+                    success: function (r) {
+                        console.log(r);
+                        alert("guardado");
+                    },
+                    error: function () {
+                        alert("error al enviar");
+                    }
+               })
+
+            });
+
+        });
+
+        //funcion donde especificamos la ruta y el metodo a ejecutarse para agregar una nueva fila
+        function cargarTabla() {
+            $.ajax({
+                url: '/api/Mesas',
+                method: "Get",
+                success: consulta,
+                error: errorConsulta
+            });
+        }
+
+        //consulta para agregar una nueva fila a la tabla
+        function consulta(con) {
+            var fila = "";
+            for (var i = 0; i < con.length; i++) {
+
+                //fila
+                fila = fila + "<tr><td scope='row'>" + (i + 1) + "</td><td>" + con[i].Ubicacion + "</td><td>" + con[i].Estado + "</td><td>" + con[i].Consumo + "</td><td>" + con[i].CantSillas + "</td>" +
+                    "<td class='textoCentro'>  <button class='btn btn-danger'  onclick='eliminar(" + con[i].idMesa + ")'>Eliminar </button> " +
+                    "<button  class='btn btn-danger'  onclick='editar(" + con[i].idMesa + ")' data-toggle='modal' data-target='#myModal' >Editar </button>  </td>" +
+                    "</tr>";
+
+            }
+            //mandando la fila a la tabla
+            $("#tabla").html(fila);
+        }
+        //funcion por si ocurre un error
+        function errorConsulta() {
+            alert("Datos no encontrados");
+        }
+
+
+        //funcion para eliminar datos
+
+        function eliminar(idMesa) {
+            $.ajax({
+                method: "Delete",
+                url: "/api/Mesas/" + idMesa,
+                data: {
+                    idMesa: idMesa,
+                },
+                success: eliminarDatos,
+                error: error
+            });
+
+        }
+
+        function eliminarDatos() {
+            alert("Datos eliminados");
+            cargarTabla();
+        }
+        function error() {
+            alert("Error al realizar la operacion");
+        }
+
+
+
+        //funcion para editar datos
+        function editar(idMesa) {
+            $.ajax({
+                method: "Get",
+                url: "/api/Mesas/" + idMesa,
+                success: Mostrar,
+                error: errorr
+            });
+            //asignado el valor del id a un input
+            $("#identificador").val(idMesa);
+        }
+
+        //funcion para mandar los datos a los campos
+        function Mostrar(data) {
+            $("#actualizar").show();
+            $("#guardar").hide();
+            $("#ubicacion").val(data.Ubicacion);
+            $("#estado").val(data.Estado);
+            $("#consumo").val(data.Consumo);
+            $("#cantsillas").val(data.CantSillas);
+        }
+
+        //al dar click en el boton actualizar
+        function actualizar() {
+            var ubicacion = $("#ubicacion").val();
+            var estado = $("#estado").val();
+            var consumo = $("#consumo").val();
+            var cantsillas = $("#cantsillas").val();
+            //asignando el valor que trae el identificador a una variable
+            var id = $("#identificador").val();
+
+            $.ajax({
+                method: "Put",
+                url: "/api/Mesas/" + id,
+                data: {
+                    idMesa: id,
+                    Ubicacion: ubicacion,
+                    Estado: estado,
+                    Consumo: consumo,
+                    CantSillas: cantsillas
+                },
+                success: modificado,
+                error: error
+            });
+
+        }
+
+        //si se modifico correctamente el registro
+        function modificado() {
+            alert("Se actualizo correctamente");
+            limpiar();
+            cargarTabla();
+        }
+
+        function errorr() {
+            alert("Error al modificar");
+        }
+
+
+        //funcion para limpiar los campos
+        function limpiar() {
+            $("#ubicacion").val("");
+            $("#consumo").val("");
+            $("#cantsillas").val("");
+            $("#identificador").val("");
+        }
+
+
+
+
+
+</script>
